@@ -1,0 +1,31 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: url('https://i.imgur.com/v00bK0v.jpeg') no-repeat center center fixed;
+  background-size: cover;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  background: rgba(0, 0, 0, 0.7);
+  max-width: 500px;
+  margin: 100px auto;
+  padding: 20px;
+  border-radius: 15px;
+  color: white;
+  box-shadow: 0 0 15px rgba(255,255,255,0.3);
+}
+
+input, textarea, button {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  background-color: #00ffcc;
+  font-weight: bold;
+  cursor: pointer;
+}
