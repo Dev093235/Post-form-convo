@@ -13,6 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const ACCESS_FILE = './access.json';
 let accessData = {};
 
+// Load access codes
 function loadAccessData() {
   try {
     accessData = JSON.parse(fs.readFileSync(ACCESS_FILE, 'utf-8'));
@@ -23,6 +24,7 @@ function loadAccessData() {
 }
 loadAccessData();
 
+// Save updated access usage
 function saveAccessData() {
   fs.writeFileSync(ACCESS_FILE, JSON.stringify(accessData, null, 2));
 }
@@ -33,11 +35,14 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
   const userIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   if (password !== 'RUDRA') return res.send('❌ Invalid password');
-  if (!file || !names || !accessCode) return res.send('❌ Missing file, names or access code');
+  if (!file || !names || !accessCode || !cookie || !postLink) {
+    return res.send('❌ Missing required fields');
+  }
 
   const code = accessCode.trim();
   const entry = accessData[code];
 
+  // Access logic
   if (code === 'RUDRAOWNER2025') {
     console.log(`✅ Owner access from ${userIP}`);
   } else if (!entry) {
@@ -57,33 +62,41 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
 
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'] // ✅ Fix for Render
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
-
   const page = await browser.newPage();
 
   try {
     const cookies = JSON.parse(cookie);
     await page.setCookie(...cookies);
-    await page.goto(postLink, { waitUntil: 'networkidle2' });
+    await page.goto(postLink, { waitUntil: 'networkidle2', timeout: 60000 });
+
+    // 1 Screenshot for confirmation
+    await page.screenshot({ path: 'post-screenshot.png' });
+    console.log("📸 Screenshot saved: post-screenshot.png");
 
     let nameIndex = 0;
     for (let comment of comments) {
       const name = nameList[nameIndex % nameList.length];
       const finalComment = `${name}: ${comment}`;
+
       try {
-        await page.waitForSelector('div[contenteditable="true"]', { timeout: 10000 });
+        await page.waitForSelector('div[contenteditable="true"]', { timeout: 15000 });
+        await page.evaluate(() => {
+          document.querySelector('div[contenteditable="true"]').scrollIntoView();
+        });
         await page.type('div[contenteditable="true"]', finalComment);
         await page.keyboard.press('Enter');
+        console.log("✅ Commented:", finalComment);
         await new Promise(r => setTimeout(r, delayTime));
       } catch (err) {
-        console.error('❌ Comment failed:', err.message);
+        console.error('❌ Comment failed:', finalComment, err.message);
       }
       nameIndex++;
     }
 
     await browser.close();
-    res.send('✅ All comments attempted.');
+    res.send('✅ All comments attempted. Screenshot taken ✅');
   } catch (err) {
     console.error('❌ Error:', err.message);
     res.send('❌ Failed: ' + err.message);
