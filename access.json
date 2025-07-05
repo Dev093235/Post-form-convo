@@ -1,7 +1,5 @@
 {
-  "codes": [
-    "RUDRA2025",
-    "VIP123",
-    "USERABC"
-  ]
+  "RUDRA2025": { "used": false },
+  "VIP123": { "used": false },
+  "USERABC": { "used": false }
 }
