@@ -11,12 +11,22 @@ const upload = multer({ dest: 'uploads/' });
 app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Load access codes
+let accessData = [];
+try {
+  accessData = JSON.parse(fs.readFileSync('./access.json', 'utf-8')).codes || [];
+} catch (e) {
+  console.error('❌ Failed to read access.json:', e.message);
+}
+
 app.post('/comment', upload.single('npFile'), async (req, res) => {
-  const { postLink, cookie, password, names } = req.body;
+  const { postLink, cookie, password, names, accessCode } = req.body;
   const file = req.file;
 
   if (password !== 'RUDRA') return res.send('❌ Invalid password');
-  if (!file || !names) return res.send('❌ Missing np.txt file or names');
+  if (!file || !names || !accessCode) return res.send('❌ Missing np.txt file, names or access code');
+
+  if (!accessData.includes(accessCode.trim())) return res.send('❌ Invalid or expired access code');
 
   const comments = fs.readFileSync(file.path, 'utf-8').split('\n').filter(Boolean);
   const nameList = names.split(/[, \n]+/).filter(Boolean);
