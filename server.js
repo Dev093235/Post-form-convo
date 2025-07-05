@@ -7,26 +7,49 @@ const puppeteer = require('puppeteer');
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
-
 app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Load access codes
-let accessData = [];
-try {
-  accessData = JSON.parse(fs.readFileSync('./access.json', 'utf-8')).codes || [];
-} catch (e) {
-  console.error('❌ Failed to read access.json:', e.message);
+const ACCESS_FILE = './access.json';
+let accessData = {};
+
+function loadAccessData() {
+  try {
+    accessData = JSON.parse(fs.readFileSync(ACCESS_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('❌ Failed to load access.json:', e.message);
+    accessData = {};
+  }
+}
+loadAccessData();
+
+function saveAccessData() {
+  fs.writeFileSync(ACCESS_FILE, JSON.stringify(accessData, null, 2));
 }
 
 app.post('/comment', upload.single('npFile'), async (req, res) => {
   const { postLink, cookie, password, names, accessCode } = req.body;
   const file = req.file;
+  const userIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   if (password !== 'RUDRA') return res.send('❌ Invalid password');
-  if (!file || !names || !accessCode) return res.send('❌ Missing np.txt file, names or access code');
+  if (!file || !names || !accessCode) return res.send('❌ Missing file, names or access code');
 
-  if (!accessData.includes(accessCode.trim())) return res.send('❌ Invalid or expired access code');
+  // Check access code
+  const code = accessCode.trim();
+  const entry = accessData[code];
+
+  if (code === 'RUDRAOWNER2025') {
+    console.log(`✅ Owner access from ${userIP}`);
+  } else if (!entry) {
+    return res.send('❌ Invalid access code.');
+  } else if (entry.used && entry.ip !== userIP) {
+    return res.send('❌ This code is already used by another IP.');
+  } else {
+    // Bind code to IP
+    accessData[code] = { used: true, ip: userIP };
+    saveAccessData();
+  }
 
   const comments = fs.readFileSync(file.path, 'utf-8').split('\n').filter(Boolean);
   const nameList = names.split(/[, \n]+/).filter(Boolean);
@@ -50,7 +73,7 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
         await page.keyboard.press('Enter');
         await new Promise(r => setTimeout(r, 3000));
       } catch (err) {
-        console.error('Comment failed:', err);
+        console.error('❌ Comment failed:', err);
       }
       nameIndex++;
     }
@@ -58,8 +81,8 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
     await browser.close();
     res.send('✅ All comments attempted.');
   } catch (err) {
-    console.error(err);
-    res.send('❌ Error occurred: ' + err.message);
+    console.error('❌ Error:', err.message);
+    res.send('❌ Failed: ' + err.message);
   }
 });
 
