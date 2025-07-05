@@ -1,45 +1,32 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const puppeteer = require("puppeteer");
-const path = require("path");
-const { parseCookies } = require("./cookies");
+// server.js const express = require('express'); const multer = require('multer'); const fs = require('fs'); const path = require('path'); const bodyParser = require('body-parser'); const puppeteer = require('puppeteer');
 
-const app = express();
-const PORT = process.env.PORT || 8080;
+const app = express(); const upload = multer({ dest: 'uploads/' });
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static(__dirname));
+app.use(express.static(__dirname)); app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
+app.post('/comment', upload.single('npFile'), async (req, res) => { const { postLink, cookie, password } = req.body; const file = req.file;
 
-app.post("/comment", async (req, res) => {
-  const { postLink, commentText, cookie, password } = req.body;
-  if (password !== "RUDRA") return res.status(403).send("❌ Wrong password.");
+if (password !== 'RUDRA') return res.send('❌ Invalid password'); if (!file) return res.send('❌ np.txt file missing');
 
+const comments = fs.readFileSync(file.path, 'utf-8').split('\n').filter(Boolean); const browser = await puppeteer.launch({ headless: true }); const page = await browser.newPage();
+
+try { const cookies = JSON.parse(cookie); await page.setCookie(...cookies); await page.goto(postLink, { waitUntil: 'networkidle2' });
+
+for (let comment of comments) {
   try {
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    });
-    const page = await browser.newPage();
-    const cookies = parseCookies(cookie, ".facebook.com");
-    await page.setCookie(...cookies);
-
-    await page.goto(postLink, { waitUntil: "networkidle2" });
-
-    await page.waitForSelector('[aria-label="Write a comment"]', { timeout: 10000 });
-    await page.click('[aria-label="Write a comment"]');
-    await page.keyboard.type(commentText);
-    await page.keyboard.press("Enter");
-
-    await browser.close();
-    res.send("✅ Comment posted successfully!");
-  } catch (error) {
-    console.error("❌ Error posting comment:", error);
-    res.status(500).send("❌ Failed to post comment. " + error.toString());
+    await page.waitForSelector('div[contenteditable="true"]', { timeout: 10000 });
+    await page.type('div[contenteditable="true"]', comment);
+    await page.keyboard.press('Enter');
+    await new Promise(r => setTimeout(r, 3000));
+  } catch (err) {
+    console.error('Comment failed:', err);
   }
-});
+}
 
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+await browser.close();
+res.send('✅ All comments attempted.');
+
+} catch (err) { console.error(err); res.send('❌ Error occurred: ' + err.message); } });
+
+app.listen(8080, () => console.log('🚀 Server running on http://localhost:8080'));
+
