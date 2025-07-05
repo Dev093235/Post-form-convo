@@ -35,7 +35,6 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
   if (password !== 'RUDRA') return res.send('❌ Invalid password');
   if (!file || !names || !accessCode) return res.send('❌ Missing file, names or access code');
 
-  // Access Code validation
   const code = accessCode.trim();
   const entry = accessData[code];
 
@@ -54,9 +53,13 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
   const nameList = names.split(/[, \n]+/).filter(Boolean);
   if (nameList.length === 0) return res.send('❌ No valid names provided');
 
-  const delayTime = parseInt(delay) || 3000; // Default 3 seconds
+  const delayTime = parseInt(delay) || 3000;
 
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'] // ✅ Fix for Render
+  });
+
   const page = await browser.newPage();
 
   try {
@@ -74,7 +77,7 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
         await page.keyboard.press('Enter');
         await new Promise(r => setTimeout(r, delayTime));
       } catch (err) {
-        console.error('❌ Comment failed:', err);
+        console.error('❌ Comment failed:', err.message);
       }
       nameIndex++;
     }
