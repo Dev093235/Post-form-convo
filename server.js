@@ -56,9 +56,9 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
   const delayTime = parseInt(delay) || 3000;
 
   try {
-    // ✅ STEP 1: SHOW VISIBLE BROWSER for first comment
+    // ✅ STEP 1: HEADLESS MODE FOR FIRST COMMENT (Render-compatible)
     const browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -72,9 +72,9 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
     await page.waitForSelector('div[contenteditable="true"]', { timeout: 10000 });
     await page.type('div[contenteditable="true"]', firstComment);
     await page.keyboard.press('Enter');
-    console.log("👁️ First comment done visibly:", firstComment);
+    console.log("🟢 First comment posted (headless):", firstComment);
 
-    await new Promise(r => setTimeout(r, 5000)); // 👁️ Wait 5 sec for user to view
+    await new Promise(r => setTimeout(r, 5000)); // Optional wait
     await browser.close();
 
     // ✅ STEP 2: BACKGROUND COMMENTS
@@ -105,7 +105,7 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
     }
 
     await browser2.close();
-    res.send('✅ Pehla comment aapke saamne hua. Baaki background me complete ho gaye.');
+    res.send('✅ Pehla comment headless me hua. Baaki sab background me post ho gaye.');
   } catch (err) {
     console.error('❌ Error:', err.message);
     res.send('❌ Failed: ' + err.message);
