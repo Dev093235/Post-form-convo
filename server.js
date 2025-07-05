@@ -1,32 +1,56 @@
-// server.js const express = require('express'); const multer = require('multer'); const fs = require('fs'); const path = require('path'); const bodyParser = require('body-parser'); const puppeteer = require('puppeteer');
+const express = require('express');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+const bodyParser = require('body-parser');
+const puppeteer = require('puppeteer');
 
-const app = express(); const upload = multer({ dest: 'uploads/' });
+const app = express();
+const upload = multer({ dest: 'uploads/' });
 
-app.use(express.static(__dirname)); app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(__dirname));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post('/comment', upload.single('npFile'), async (req, res) => { const { postLink, cookie, password } = req.body; const file = req.file;
+app.post('/comment', upload.single('npFile'), async (req, res) => {
+  const { postLink, cookie, password, names } = req.body;
+  const file = req.file;
 
-if (password !== 'RUDRA') return res.send('❌ Invalid password'); if (!file) return res.send('❌ np.txt file missing');
+  if (password !== 'RUDRA') return res.send('❌ Invalid password');
+  if (!file || !names) return res.send('❌ Missing np.txt file or names');
 
-const comments = fs.readFileSync(file.path, 'utf-8').split('\n').filter(Boolean); const browser = await puppeteer.launch({ headless: true }); const page = await browser.newPage();
+  const comments = fs.readFileSync(file.path, 'utf-8').split('\n').filter(Boolean);
+  const nameList = names.split(/[, \n]+/).filter(Boolean);
+  if (nameList.length === 0) return res.send('❌ No valid names provided');
 
-try { const cookies = JSON.parse(cookie); await page.setCookie(...cookies); await page.goto(postLink, { waitUntil: 'networkidle2' });
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
 
-for (let comment of comments) {
   try {
-    await page.waitForSelector('div[contenteditable="true"]', { timeout: 10000 });
-    await page.type('div[contenteditable="true"]', comment);
-    await page.keyboard.press('Enter');
-    await new Promise(r => setTimeout(r, 3000));
+    const cookies = JSON.parse(cookie);
+    await page.setCookie(...cookies);
+    await page.goto(postLink, { waitUntil: 'networkidle2' });
+
+    let nameIndex = 0;
+    for (let comment of comments) {
+      const name = nameList[nameIndex % nameList.length];
+      const finalComment = `${name}: ${comment}`;
+      try {
+        await page.waitForSelector('div[contenteditable="true"]', { timeout: 10000 });
+        await page.type('div[contenteditable="true"]', finalComment);
+        await page.keyboard.press('Enter');
+        await new Promise(r => setTimeout(r, 3000));
+      } catch (err) {
+        console.error('Comment failed:', err);
+      }
+      nameIndex++;
+    }
+
+    await browser.close();
+    res.send('✅ All comments attempted.');
   } catch (err) {
-    console.error('Comment failed:', err);
+    console.error(err);
+    res.send('❌ Error occurred: ' + err.message);
   }
-}
-
-await browser.close();
-res.send('✅ All comments attempted.');
-
-} catch (err) { console.error(err); res.send('❌ Error occurred: ' + err.message); } });
+});
 
 app.listen(8080, () => console.log('🚀 Server running on http://localhost:8080'));
-
