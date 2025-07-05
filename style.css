@@ -1,31 +1,120 @@
 body {
+  margin: 0;
+  padding: 0;
   font-family: 'Segoe UI', sans-serif;
   background: url('https://i.imgur.com/v00bKRx.jpeg') no-repeat center center fixed;
   background-size: cover;
-  margin: 0;
-  padding: 0;
 }
 
 .container {
-  background: rgba(0, 0, 0, 0.7);
-  max-width: 500px;
-  margin: 100px auto;
-  padding: 20px;
-  border-radius: 15px;
-  color: white;
-  box-shadow: 0 0 15px rgba(255,255,255,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
 }
 
-input, textarea, button {
+.form-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid #ffffff88;
+  border-radius: 15px;
+  padding: 30px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(2px); /* Keep this as is for less background blur */
+  -webkit-backdrop-filter: blur(2px); /* Keep this as is for less background blur */
+}
+
+h1 {
+  text-align: center;
+  color: white;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 6px black;
+}
+
+input, select, textarea, button {
   width: 100%;
+  padding: 12px;
   margin: 10px 0;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+}
+
+input, select, textarea {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: white; /* Color of the text typed by the user */
+  border: 1px solid #ffffff88;
+}
+
+textarea {
+  resize: vertical;
+}
+
+/* --- CHANGE STARTS HERE --- */
+/* Placeholder text color for better visibility */
+input::placeholder,
+textarea::placeholder {
+  color: #a0a0a0; /* Changed from #ddd to a darker grey */
+}
+/* --- CHANGE ENDS HERE --- */
+
+label {
+  color: white;
+  font-weight: bold;
 }
 
 button {
-  background-color: #00ffcc;
+  background: linear-gradient(135deg, #ff00cc, #3333ff);
+  color: white;
   font-weight: bold;
+  border: none;
   cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 0 12px #ff00cc;
 }
+
+button:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 25px #ff00cc;
+}
+
+/* 💬 CHAT BUTTONS STYLING */
+.chat-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.wp-btn, .fb-btn {
+  padding: 10px 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.3s;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+.wp-btn {
+  background-color: #25D366;
+  color: white;
+}
+
+.wp-btn:hover {
+  background-color: #1ebe5d;
+  transform: scale(1.05);
+}
+
+.fb-btn {
+  background-color: #1877F2;
+  color: white;
+}
+
+.fb-btn:hover {
+  background-color: #0e5ce4;
+  transform: scale(1.05);
+  }
