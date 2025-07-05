@@ -57,7 +57,11 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
 
   try {
     // ✅ STEP 1: SHOW VISIBLE BROWSER for first comment
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({
+      headless: false,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
     const page = await browser.newPage();
     const cookies = JSON.parse(cookie);
     await page.setCookie(...cookies);
@@ -74,7 +78,11 @@ app.post('/comment', upload.single('npFile'), async (req, res) => {
     await browser.close();
 
     // ✅ STEP 2: BACKGROUND COMMENTS
-    const browser2 = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+    const browser2 = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
     const page2 = await browser2.newPage();
     await page2.setCookie(...cookies);
     await page2.goto(postLink, { waitUntil: 'networkidle2' });
