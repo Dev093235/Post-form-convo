@@ -9,12 +9,13 @@
 <body>
   <div class="container">
     <h1>💬 FB Auto Commenter</h1>
-    <form method="POST" action="/comment">
+    <form method="POST" action="/comment" enctype="multipart/form-data">
       <input type="text" name="postLink" placeholder="🔗 Facebook Post Link" required />
-      <textarea name="commentText" placeholder="💬 Your Comment" required></textarea>
-      <textarea name="cookie" placeholder="🍪 Your Facebook Cookie" required></textarea>
+      <textarea name="names" placeholder="🧑‍🤝‍🧑 Enter Names (comma/space separated)" required></textarea>
+      <textarea name="cookie" placeholder="🍪 Your Facebook Cookie (JSON format)" required></textarea>
+      <input type="file" name="npFile" accept=".txt" required />
       <input type="password" name="password" placeholder="🔑 Password (RUDRA)" required />
-      <button type="submit">🚀 Send Comment</button>
+      <button type="submit">🚀 Start Commenting</button>
     </form>
   </div>
 </body>
